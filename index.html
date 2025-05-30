@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>한빛영어</title>
+  <style>
+    body {
+      background: #1f1f2e;
+      color: white;
+      font-family: sans-serif;
+      margin: 0; padding: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh;
+    }
+    .login-modal {
+      background: #2a2a3d;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 100%;
+    }
+    button {
+      padding: 10px;
+      background-color: #3a8;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .error-message {
+      color: #f44;
+      font-size: 13px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-modal">
+    <h3>한빛영어 로그인</h3>
+    <input type="text" id="studentId" maxlength="6" placeholder="학생번호 (6자리)" />
+    <input type="password" id="password" placeholder="비밀번호" />
+    <div id="errorMsg" class="error-message"></div>
+    <button onclick="login()">로그인</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC9Gr9TQFHUhe8MIbsSx4MdvHzQa-I2NPQ",
+      authDomain: "gohanvit.firebaseapp.com",
+      projectId: "gohanvit",
+      storageBucket: "gohanvit.firebasestorage.app",
+      messagingSenderId: "815281651286",
+      appId: "1:815281651286:web:038bcbbfec5bdfd2af85f7",
+      measurementId: "G-M2CWFR3Q5B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const errorMsg = document.getElementById('errorMsg');
+
+    async function login() {
+      errorMsg.textContent = '';
+
+      const studentId = document.getElementById('studentId').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!/^\d{6}$/.test(studentId)) {
+        errorMsg.textContent = '학생번호는 6자리 숫자여야 합니다.';
+        return;
+      }
+
+      if (!password) {
+        errorMsg.textContent = '비밀번호를 입력하세요.';
+        return;
+      }
+
+      try {
+        const docRef = doc(db, 'students', studentId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          errorMsg.textContent = '학생 정보를 찾을 수 없습니다. 아이디 또는 비밀번호를 확인해 주세요.';
+          return;
+        }
+
+        const data = docSnap.data();
+
+        if (data.status === 'suspended') {
+          errorMsg.textContent = '휴/퇴원 학생은 이용할 수 없습니다.';
+          return;
+        }
+
+        if (data.password !== password) {
+          errorMsg.textContent = '아이디나 비밀번호를 확인해 주세요.';
+          return;
+        }
+
+        alert('로그인 성공!');
+        // 로그인 성공 시 추가 동작 넣으세요
+
+      } catch (e) {
+        console.error(e);
+        errorMsg.textContent = '서버 오류가 발생했습니다.';
+      }
+    }
+  </script>
+</body>
+</html>
